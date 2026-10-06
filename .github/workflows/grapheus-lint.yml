@@ -1,0 +1,21 @@
+name: Grapheus lint
+on:
+  push:
+    branches: [grapheus-lint]
+jobs:
+  lint:
+    runs-on: ubuntu-24.04
+    steps:
+    - uses: actions/checkout@v4
+    - uses: ./.github/actions/setup-php-composer
+      with:
+        php-version: '8.5'
+    - name: PHPStan (module only)
+      continue-on-error: true
+      run: vendor/bin/phpstan --memory-limit=8G analyze -c .phpstan/phpstan.ci.neon --error-format=raw --no-progress interface/modules/custom_modules/oe-module-grapheus 2>&1 | tee phpstan.txt
+    - name: Rector (module only)
+      continue-on-error: true
+      run: vendor/bin/rector process --dry-run --no-progress-bar interface/modules/custom_modules/oe-module-grapheus 2>&1 | tee rector.txt
+    - name: PHPCS (module only)
+      continue-on-error: true
+      run: vendor/bin/phpcs -s --report=emacs interface/modules/custom_modules/oe-module-grapheus 2>&1 | tee phpcs.txt
