@@ -15,11 +15,11 @@ namespace Exetazo\Grapheus;
 use GuzzleHttp\Client as Http;
 use GuzzleHttp\Exception\GuzzleException;
 
-final class Client
+final readonly class Client
 {
-    private readonly string $server;
+    private string $server;
 
-    public function __construct(string $server, private readonly string $key)
+    public function __construct(string $server, private string $key)
     {
         $this->server = rtrim($server, '/');
     }

@@ -12,7 +12,7 @@
 
 namespace Exetazo\Grapheus;
 
-use OpenEMR\Common\Crypto\CryptoGen;
+use OpenEMR\BC\ServiceContainer;
 
 final class Store
 {
@@ -37,13 +37,12 @@ final class Store
 
     private static function encrypt(string $value): string
     {
-        return (new CryptoGen())->encryptStandard($value);
+        return ServiceContainer::getCrypto()->encryptForDatabase($value);
     }
 
     private static function decrypt(string $value): string
     {
-        $plain = (new CryptoGen())->decryptStandard($value);
-        return is_string($plain) ? $plain : '';
+        return ServiceContainer::getCrypto()->decryptFromDatabase($value);
     }
 
     public static function saveKey(int $userId, string $key, string $email): void

@@ -25,18 +25,18 @@ namespace Exetazo\Grapheus;
 use OpenEMR\Billing\BillingUtilities;
 use OpenEMR\Common\Uuid\UuidRegistry;
 
-final class Applier
+final readonly class Applier
 {
     public const NOTE_FOOTER = 'Documentation drafted with Grapheus (AI scribe) and reviewed by the clinician.';
     public const RX_NOTE = 'Drafted by Grapheus from the visit. Review and send it yourself; Grapheus never transmits prescriptions.';
 
     public function __construct(
-        private readonly int $pid,
-        private readonly int $encounter,
-        private readonly int $userId,
-        private readonly string $userName,
-        private readonly string $groupName,
-        private readonly int $authorized = 0
+        private int $pid,
+        private int $encounter,
+        private int $userId,
+        private string $userName,
+        private string $groupName,
+        private int $authorized = 0
     ) {
     }
 

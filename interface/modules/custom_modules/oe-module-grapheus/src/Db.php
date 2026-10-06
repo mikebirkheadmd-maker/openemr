@@ -58,17 +58,6 @@ final class Db
      */
     public static function transaction(callable $action): mixed
     {
-        if (method_exists(QueryUtils::class, 'inTransaction')) {
-            return QueryUtils::inTransaction($action);                  // OpenEMR 8
-        }
-        QueryUtils::startTransaction();                                 // OpenEMR 7.0.x
-        try {
-            $result = $action();
-            QueryUtils::commitTransaction();
-            return $result;
-        } catch (\Exception $e) {
-            QueryUtils::rollbackTransaction();
-            throw $e;
-        }
+        return QueryUtils::inTransaction($action);
     }
 }

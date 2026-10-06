@@ -135,7 +135,7 @@ final class Assistant
         if ($first === '') {
             return [];
         }
-        $last = count($parts) > 1 ? (string) end($parts) : '';
+        $last = count($parts) > 1 ? end($parts) : '';
         $sql = "SELECT pid, fname, lname, DOB FROM patient_data WHERE (fname LIKE ? OR preferred_name LIKE ?)";
         $binds = [$first . '%', $first . '%'];
         if ($last !== '') {

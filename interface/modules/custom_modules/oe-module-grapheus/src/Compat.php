@@ -1,10 +1,9 @@
 <?php
 
 /**
- * One module for OpenEMR 7.0.x and 8.x. OpenEMR 8 moved session data behind
- * SessionWrapperFactory, CSRF tokens now take the session, globals live in
- * OEGlobalsBag and addForm() moved to FormService; 7.0.x uses $_SESSION,
- * $GLOBALS and the legacy functions. Everything version-specific is here.
+ * The few OpenEMR services the module needs, in one place: the session, CSRF
+ * tokens, the request, paths and attaching a form to an encounter.
+ * (OpenEMR 8.x. The 7.0.x build of this file uses the legacy equivalents.)
  *
  * @package   Grapheus
  * @copyright Copyright (c) 2026 Exetazo Health
@@ -18,6 +17,7 @@ use OpenEMR\Common\Session\SessionWrapperFactory;
 use OpenEMR\Core\OEGlobalsBag;
 use OpenEMR\Services\FormService;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Session\SessionInterface;
 
 final class Compat
 {
@@ -30,58 +30,40 @@ final class Compat
         return self::$request ??= Request::createFromGlobals();
     }
 
-    /** The OpenEMR 8 session, or null on 7.0.x. */
-    public static function session(): ?object
+    public static function session(): SessionInterface
     {
-        return class_exists(SessionWrapperFactory::class) ? SessionWrapperFactory::getInstance()->getActiveSession() : null;
+        return SessionWrapperFactory::getInstance()->getActiveSession();
     }
 
     public static function get(string $key, mixed $default = null): mixed
     {
-        $s = self::session();
-        if ($s !== null && method_exists($s, 'get')) {
-            return $s->get($key, $default);
-        }
-        return $_SESSION[$key] ?? $default;
+        return self::session()->get($key, $default);
     }
 
     public static function csrfToken(): string
     {
-        $s = self::session();
-        return $s !== null ? CsrfUtils::collectCsrfToken($s, self::CSRF_SUBJECT) : CsrfUtils::collectCsrfToken(self::CSRF_SUBJECT);
+        return CsrfUtils::collectCsrfToken(self::session(), self::CSRF_SUBJECT);
     }
 
     public static function csrfValid(string $token): bool
     {
-        $s = self::session();
-        return $s !== null ? CsrfUtils::verifyCsrfToken($token, $s, self::CSRF_SUBJECT) : CsrfUtils::verifyCsrfToken($token, self::CSRF_SUBJECT);
+        return CsrfUtils::verifyCsrfToken($token, self::session(), self::CSRF_SUBJECT);
     }
 
     /** Let other OpenEMR requests run while a long upload is in progress. */
     public static function releaseSession(): void
     {
-        $s = self::session();
-        if ($s !== null && method_exists($s, 'save')) {
-            $s->save();
-        } elseif (session_status() === PHP_SESSION_ACTIVE) {
-            session_write_close();
-        }
+        self::session()->save();
     }
 
     public static function webroot(): string
     {
-        if (class_exists(OEGlobalsBag::class)) {
-            return OEGlobalsBag::getInstance()->getWebRoot();
-        }
-        return Val::str($GLOBALS['webroot'] ?? '');
+        return OEGlobalsBag::getInstance()->getWebRoot();
     }
 
     public static function fileroot(): string
     {
-        if (class_exists(OEGlobalsBag::class)) {
-            return OEGlobalsBag::getInstance()->getProjectDir();
-        }
-        return Val::str($GLOBALS['fileroot'] ?? dirname(__DIR__, 5));
+        return OEGlobalsBag::getInstance()->getProjectDir();
     }
 
     public static function moduleUrl(string $path = ''): string
@@ -89,14 +71,8 @@ final class Compat
         return self::webroot() . '/interface/modules/custom_modules/oe-module-grapheus/public' . ($path === '' ? '' : '/' . ltrim($path, '/'));
     }
 
-    /** Attach a form row to an encounter (FormService on 8.x, the legacy function on 7.0.x). */
     public static function addForm(int $encounter, string $name, int $formId, string $dir, int $pid, int $authorized): void
     {
-        if (method_exists(FormService::class, 'addForm')) {
-            (new FormService())->addForm($encounter, $name, $formId, $dir, $pid, (string) $authorized);
-            return;
-        }
-        require_once self::fileroot() . '/library/forms.inc.php';
-        \call_user_func('addForm', $encounter, $name, $formId, $dir, $pid, (string) $authorized);
+        (new FormService())->addForm($encounter, $name, $formId, $dir, $pid, (string) $authorized);
     }
 }

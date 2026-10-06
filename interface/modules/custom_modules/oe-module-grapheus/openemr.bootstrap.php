@@ -18,13 +18,9 @@ use OpenEMR\Menu\MenuEvent;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 /**
- * @var EventDispatcherInterface $eventDispatcher  provided by the module loader (7.0.x and 8.x)
- * @var ModulesClassLoader|null  $classLoader      provided by the module loader on 8.x
+ * @var EventDispatcherInterface $eventDispatcher  provided by the module loader
+ * @var ModulesClassLoader       $classLoader      provided by the module loader
  */
-require_once __DIR__ . '/src/Compat.php';
-if (!isset($classLoader) || !$classLoader instanceof ModulesClassLoader) {
-    $classLoader = new ModulesClassLoader(Compat::fileroot());
-}
 $classLoader->registerNamespaceIfNotExists('Exetazo\\Grapheus\\', __DIR__ . DIRECTORY_SEPARATOR . 'src');
 
 $eventDispatcher->addListener(EncounterMenuEvent::MENU_RENDER, static function (EncounterMenuEvent $event): EncounterMenuEvent {
